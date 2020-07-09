@@ -1,0 +1,24 @@
+language: generic
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t dorcaschan/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true dorcaschan/react-test npm run test
+
+after_success:
+  - docker build -t dorcaschan/multi-client ./client
+  - docker build -t dorcaschan/multi-nginx ./nginx
+  - docker build -t dorcaschan/multi-server ./server
+  - docker build -t dorcaschan/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push dorcaschan/multi-client
+  - docker push dorcaschan/multi-nginx
+  - docker push dorcaschan/multi-server
+  - docker push dorcaschan/multi-worker
